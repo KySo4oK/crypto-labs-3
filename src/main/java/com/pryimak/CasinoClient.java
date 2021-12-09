@@ -20,7 +20,7 @@ public interface CasinoClient {
     @Path("/play{Mode}")
     BetResult play(@PathParam("Mode") String mode,
                    @QueryParam("id") String playerId,
-                   @QueryParam("bet") int amountOfMoney,
-                   @QueryParam("number") int theNumberYouBetOn);
+                   @QueryParam("bet") String amountOfMoney,
+                   @QueryParam("number") String theNumberYouBetOn);
 
 }

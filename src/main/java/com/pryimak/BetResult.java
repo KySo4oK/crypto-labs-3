@@ -6,7 +6,7 @@ import lombok.Data;
 public class BetResult {
     private String message;
     private Account account;
-    private int realNumber;
+    private long realNumber;
 
     @Override
     public String toString() {
