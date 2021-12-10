@@ -1,5 +1,6 @@
 package com.pryimak;
 
+import org.apache.commons.math3.random.MersenneTwister;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import javax.inject.Inject;
@@ -8,6 +9,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -63,5 +66,28 @@ public class ExampleResource {
         //increment - -3281063073
 
         return play.toString();
+    }
+
+    @GET
+    @Path("/mt/{id}")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String solveMt(@PathParam("id") String id) {
+        int beforeCreating = (int) Instant.now().atOffset(ZoneOffset.UTC).toEpochSecond();
+        System.out.println(beforeCreating);
+        Account acc = client.createAcc(id);
+        System.out.println("acc - " + acc);
+        BetResult play = client.play(Mode.Mt.name(), id, valueOf(1), valueOf(1));
+        System.out.println("play - " + play);
+
+        for (int i = 0; i < 100; i++) {
+            MersenneTwister mersenneTwister = new MersenneTwister();
+            mersenneTwister.setSeed(beforeCreating + i);
+            int nextInt = mersenneTwister.nextInt();
+            System.out.println(nextInt);
+            if (nextInt == play.getRealNumber()) {
+                return client.play(Mode.Mt.name(), id, valueOf(1), valueOf(mersenneTwister.nextInt())).toString();
+            }
+        }
+        return "";
     }
 }
