@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static com.pryimak.Mode.*;
 import static java.lang.String.valueOf;
 
 @Path("/casino")
@@ -37,7 +38,7 @@ public class ExampleResource {
     @Path("/bet/{id}")
     @Produces(MediaType.TEXT_PLAIN)
     public String bet(@PathParam("id") String id) {
-        return client.play(Mode.Lcg.name(), id, valueOf(1), valueOf(34689329)).toString();
+        return client.play(Lcg.name(), id, valueOf(1), valueOf(34689329)).toString();
     }
 
     @GET
@@ -47,7 +48,7 @@ public class ExampleResource {
         List<Long> numbers = IntStream.range(0, 3)
                 .boxed()
                 .map(i -> {
-                    long realNumber = client.play(Mode.Lcg.name(), id, valueOf(1), valueOf(34689329)).getRealNumber();
+                    long realNumber = client.play(Lcg.name(), id, valueOf(1), valueOf(34689329)).getRealNumber();
                     System.out.println("realNumber - " + realNumber);
                     return realNumber;
                 })
@@ -60,7 +61,7 @@ public class ExampleResource {
         long increment = cracker.crackIncrement(numbers, modulus, multiplier);
         long bet = cracker.makeBet(numbers, modulus, multiplier, increment);
 
-        BetResult play = client.play(Mode.Lcg.name(), id, valueOf(100000), valueOf(bet));
+        BetResult play = client.play(Lcg.name(), id, valueOf(100000), valueOf(bet));
         System.out.println("play" + play);
         //multiplier - 1664525
         //increment - -3281063073
@@ -76,7 +77,7 @@ public class ExampleResource {
         System.out.println(beforeCreating);
         Account acc = client.createAcc(id);
         System.out.println("acc - " + acc);
-        BetResult play = client.play(Mode.Mt.name(), id, valueOf(1), valueOf(1));
+        BetResult play = client.play(Mt.name(), id, valueOf(1), valueOf(1));
         System.out.println("play - " + play);
 
         for (int i = 0; i < 100; i++) {
@@ -85,9 +86,30 @@ public class ExampleResource {
             int nextInt = mersenneTwister.nextInt();
             System.out.println(nextInt);
             if (nextInt == play.getRealNumber()) {
-                return client.play(Mode.Mt.name(), id, valueOf(1), valueOf(mersenneTwister.nextInt())).toString();
+                return client.play(Mt.name(), id, valueOf(1), valueOf(mersenneTwister.nextInt())).toString();
             }
         }
         return "";
     }
+
+    @GET
+    @Path("/better-mt/{id}")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String solveBetterMt(@PathParam("id") String id) {
+        client.createAcc(id);
+
+        int[] states = new int[625];
+        BetterMtCracker betterMtCracker = new BetterMtCracker();
+        for (int i = 0; i < 624; i++) {
+            long realNumber = client.play(BetterMt.name(), id, valueOf(1), valueOf(1)).getRealNumber();
+            states[i] = (int) realNumber;
+        }
+
+        final MT19937_32 clone = betterMtCracker.createNewGeneratorByStates(states);
+
+        BetResult play2 = client.play(BetterMt.name(), id, valueOf(1), valueOf(clone.nextInt()));
+
+        return play2.toString();
+    }
+
 }
